@@ -1,10 +1,6 @@
 type t =
   | TVar of string (* TVar "something" *)
   | TArrow of t * t (*int -> int*)
-
-
-
-
   | TInt (* int *)
 
 type term =
@@ -17,10 +13,7 @@ let rec string_of_type = function
   | TVar s -> s
   | TInt -> "int"
   | TArrow (t1, t2) -> (
-      match t1 with
-      | _ -> string_of_type t1 ^ " -> " ^ string_of_type t2)
-
-
+      match t1 with _ -> string_of_type t1 ^ " -> " ^ string_of_type t2)
 
 (* does it handle nesting porpely? *)
 let rec string_of_term = function
@@ -45,16 +38,17 @@ let gen_var =
 let rec free_var = function
   | Int _ -> []
   | Var x -> [ x ]
-  | Abs (x, _, t) -> List.filter (( <> ) x) (free_var t)
+  | Abs (x, _, t) ->
+      List.filter (( <> ) x) (free_var t)
       (* filter all occurences of var x and recursively free subsequent mem
 bers. x -> y -> z *)
   | App (t1, t2) -> free_var t1 @ free_var t2
-      (* recursively frees a function application. quadratic merge tho, soo
+(* recursively frees a function application. quadratic merge tho, soo
 oooo *)
 
-
 let rec alpha x s term =
- let () = print_endline("Alpha: " ^ string_of_term(term)) in (* DEBUG *)
+  let () = print_endline ("Alpha: " ^ string_of_term term) in
+  (* DEBUG *)
   match term with
   | Var term' when x = term' -> s (* case of direct match return body *)
   | Var term' -> Var term'
@@ -67,31 +61,25 @@ let rec alpha x s term =
       let t' = alpha y (Var gen) t in
       Abs (gen, ty, alpha x s t')
 
-
 let beta_reduce term =
-  let rec reduce term = begin
-    let () = print_endline("Beta: " ^ string_of_term(term)) in (* DEBUG *)
+  let rec reduce term =
+    let () = print_endline ("Beta: " ^ string_of_term term) in
+    (* DEBUG *)
     match term with
-    | App (Abs (x, _, t1), t2) -> alpha x t2 t1
-|> reduce
+    | App (Abs (x, _, t1), t2) -> alpha x t2 t1 |> reduce
     | App (t1, t2) ->
         let t1' = reduce t1 in
         let t2' = reduce t2 in
-        if t1 = t1' && t2 = t2' then App (t1, t2
-) else App (t1', t2') |> reduce
+        if t1 = t1' && t2 = t2' then App (t1, t2) else App (t1', t2') |> reduce
     | Abs (x, ty, t) -> Abs (x, ty, reduce t)
     | _ -> term
-  end
   in
   try reduce term
   with Stack_overflow ->
     Printf.printf
-      "Stack overflow occurred! possible infinit
-e recursion or the expression \
-       is too deeply nested to evaluate.";
+      "Stack overflow occurred! possible infinit\n\
+       e recursion or the expression is too deeply nested to evaluate.";
     term
-
-
 
 (* type checking . will modify*)
 exception TypeError of string
@@ -102,24 +90,19 @@ let rec type_check env term =
   | Var x -> (
       match List.assoc_opt x env with
       | Some t -> t
-      | None -> raise (TypeError ("Unbound varia
-ble: " ^ x)))
+      | None -> raise (TypeError ("Unbound varia\nble: " ^ x)))
   | Abs (x, t1, body) ->
-      let body_type = type_check ((x, t1) :: env
-) body in
+      let body_type = type_check ((x, t1) :: env) body in
       TArrow (t1, body_type)
   | App (t1, t2) -> (
       match type_check env t1 with
       | TArrow (arg_type, ret_type) ->
           let t2_type = type_check env t2 in
           if t2_type = arg_type then ret_type
-          else raise (TypeError "Type mismatch i
-n application")
-      | _ -> raise (TypeError "Expected function
- type"))
+          else raise (TypeError "Type mismatch i\nn application")
+      | _ -> raise (TypeError "Expected function\n type"))
 
-
- (* Helpers . will use seperate module in futhre*)
+(* Helpers . will use seperate module in futhre*)
 
 let interpret_church num =
   match num with
@@ -134,8 +117,7 @@ let interpret_church num =
   | _ -> failwith "Not a church numeral"
 
 let gen_church n =
-  let church_zero = Abs ("f", TArrow (TInt, TInt
-), Abs ("x", TInt, Var "x")) in
+  let church_zero = Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, Var "x")) in
   if n == 0 then church_zero
   else
     Abs
@@ -145,12 +127,6 @@ let gen_church n =
           ( "x",
             TInt,
             let rec apply_f n x =
-              if n = 0 then x else App (Var "f",
- apply_f (n - 1) x)
+              if n = 0 then x else App (Var "f", apply_f (n - 1) x)
             in
             apply_f n (Var "x") ) )
-
-
-
-
-
