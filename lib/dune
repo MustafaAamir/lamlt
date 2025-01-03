@@ -2,4 +2,4 @@
  (modules lambda church)
  (public_name lcaml)
  (name lcaml)
- (wrapped false))
+ (wrapped true))
