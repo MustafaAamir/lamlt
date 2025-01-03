@@ -1,2 +1,4 @@
 (library
+ (modules lambda)
+ (public_name lcaml)
  (name lcaml))
