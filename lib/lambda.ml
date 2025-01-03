@@ -29,4 +29,21 @@ let rec string_of_term = function
       | App (_, _) -> string_of_term t1 ^ " (" ^ string_of_term t2 ^ ")"
       | _ -> string_of_term t1 ^ " " ^ string_of_term t2)
 
+(* maintain a Hashtbl of vars to avoid redundant increments *)
+let gen_var =
+  let counter = ref 0 in
+  fun base ->
+    incr counter;
+    base
+    ^ string_of_int
+        !counter (* x becomes x1 . Should I use x' to sound cooler? *)
 
+let rec free_var = function
+  | Int _ -> []
+  | Var x -> [ x ]
+  | Abs (x, _, t) -> List.filter (( <> ) x) (free_var t)
+      (* filter all occurences of var x and recursively free subsequent mem
+bers. x -> y -> z *)
+  | App (t1, t2) -> free_var t1 @ free_var t2
+      (* recursively frees a function application. quadratic merge tho, soo
+oooo *)
