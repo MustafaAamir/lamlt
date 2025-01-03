@@ -9,7 +9,6 @@ type term =
   | App of term * term (* f x *)
   | Int of int (* useit like Int 42 *)
 
- 
 let rec string_of_type = function
   | TVar s -> s
   | TInt -> "int"
@@ -82,8 +81,7 @@ let beta_reduce term =
   try reduce term with
   | Stack_overflow ->
     Printf.printf
-      "Stack overflow occurred! possible infinit\n\
-       e recursion or the expression is too deeply nested to evaluate.";
+      "Stack overflow occurred! possible infinite recursion or the expression is too deeply nested to evaluate.";
     term
 ;;
 
@@ -96,7 +94,7 @@ let rec type_check env term =
   | Var x ->
     (match List.assoc_opt x env with
      | Some t -> t
-     | None -> raise (TypeError ("Unbound varia\nble: " ^ x)))
+     | None -> raise (TypeError ("Unbound variable: " ^ x)))
   | Abs (x, t1, body) ->
     let body_type = type_check ((x, t1) :: env) body in
     TArrow (t1, body_type)
@@ -106,124 +104,6 @@ let rec type_check env term =
        let t2_type = type_check env t2 in
        if t2_type = arg_type
        then ret_type
-       else raise (TypeError "Type mismatch i\nn application")
-     | _ -> raise (TypeError "Expected function\n type"))
+       else raise (TypeError "Type mismatch in application")
+     | _ -> raise (TypeError "Expected function type"))
 ;;
-
-(* Helpers . will use seperate module in futhre*)
-
-module Church = struct
-  let interpret_church = function
-    | Abs ("f", _, Abs ("x", _, body)) ->
-      let rec count_apps t count =
-        match t with
-        | Var "x" -> count
-        | App (Var "f", t') -> count_apps t' (count + 1)
-        | _ -> failwith "invalid church numeral"
-      in
-      count_apps body 0
-    | _ -> failwith "Not a church numeral"
-  ;;
-
-  let gen_church n =
-    let church_zero = Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, Var "x")) in
-    if n == 0
-    then church_zero
-    else
-      Abs
-        ( "f"
-        , TArrow (TInt, TInt)
-        , Abs
-            ( "x"
-            , TInt
-            , let rec apply_f n x =
-                if n = 0 then x else App (Var "f", apply_f (n - 1) x)
-              in
-              apply_f n (Var "x") ) )
-  ;;
-
-  let true_ = Abs ("x", TVar "a", Abs ("y", TVar "b", Var "x"))
-  let false_ = Abs ("x", TVar "a", Abs ("y", TVar "b", Var "y"))
-
-  (* Zero *)
-  let _zero = Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, Var "x"))
-
-  (* Successor function *)
-  let _succ =
-    Abs
-      ( "n"
-      , TArrow (TInt, TInt)
-      , Abs
-          ( "f"
-          , TArrow (TInt, TInt)
-          , Abs ("x", TInt, App (Var "f", App (App (Var "n", Var "f"), Var "x"))) ) )
-  ;;
-
-  (* Add two Church numerals *)
-  let _add =
-    Abs
-      ( "m"
-      , TArrow (TInt, TInt)
-      , Abs
-          ( "n"
-          , TArrow (TInt, TInt)
-          , Abs
-              ( "f"
-              , TArrow (TInt, TInt)
-              , Abs
-                  ( "x"
-                  , TInt
-                  , App (App (Var "m", Var "f"), App (App (Var "n", Var "f"), Var "x")) )
-              ) ) )
-  ;;
-
-  (* Multiply two Church numerals *)
-  let multiply =
-    Abs
-      ( "m"
-      , TArrow (TInt, TInt)
-      , Abs
-          ( "n"
-          , TArrow (TInt, TInt)
-          , Abs ("f", TArrow (TInt, TInt), App (Var "m", App (Var "n", Var "f"))) ) )
-  ;;
-
-  (* Subtract one Church numeral from another (via predecessor) *)
-  let pred =
-    Abs
-      ( "n"
-      , TArrow (TInt, TInt)
-      , Abs
-          ( "f"
-          , TArrow (TInt, TInt)
-          , Abs
-              ( "x"
-              , TInt
-              , App
-                  ( App
-                      ( App
-                          ( Var "n"
-                          , Abs
-                              ( "g"
-                              , TArrow (TInt, TInt)
-                              , Abs
-                                  ( "h"
-                                  , TArrow (TInt, TInt)
-                                  , App (Var "h", App (Var "g", Var "f")) ) ) )
-                      , Abs ("u", TInt, Var "x") )
-                  , Abs ("u", TInt, Var "u") ) ) ) )
-  ;;
-
-  (* If-then-else *)
-  let if_ =
-    Abs
-      ( "p"
-      , TVar "a"
-      , Abs ("a", TVar "b", Abs ("b", TVar "c", App (App (Var "p", Var "a"), Var "b"))))
-  ;;
-
-  (* Is zero *)
-  let is_zero =
-    Abs ("n", TArrow (TInt, TInt), App (App (Var "n", Abs ("x", TVar "a", false_)), true_))
-  ;;
-end
