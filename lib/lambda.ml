@@ -87,3 +87,30 @@ term(term)) in (* DEBUG *)
 e recursion or the expression \
        is too deeply nested to evaluate.";
     term
+
+
+
+(* type checking . will modify*)
+exception TypeError of string
+
+let rec type_check env term =
+  match term with
+  | Int _ -> TInt
+  | Var x -> (
+      match List.assoc_opt x env with
+      | Some t -> t
+      | None -> raise (TypeError ("Unbound varia
+ble: " ^ x)))
+  | Abs (x, t1, body) ->
+      let body_type = type_check ((x, t1) :: env
+) body in
+      TArrow (t1, body_type)
+  | App (t1, t2) -> (
+      match type_check env t1 with
+      | TArrow (arg_type, ret_type) ->
+          let t2_type = type_check env t2 in
+          if t2_type = arg_type then ret_type
+          else raise (TypeError "Type mismatch i
+n application")
+      | _ -> raise (TypeError "Expected function
+ type"))
