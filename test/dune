@@ -1,2 +1,4 @@
 (test
+ (libraries lcaml ounit2)
+ (modules test_lcaml)
  (name test_lcaml))
