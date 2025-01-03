@@ -114,3 +114,37 @@ ble: " ^ x)))
 n application")
       | _ -> raise (TypeError "Expected function
  type"))
+
+
+ (* Helpers . will use seperate module in futhre*)
+
+let interpret_church num =
+      let rec count_apps t count =
+        match t with
+        | Var "x" -> count
+        | _ -> failwith "invalid church numeral"
+      in
+      count_apps body 0
+  | _ -> failwith "Not a church numeral"
+
+let gen_church n =
+  let church_zero = Abs ("f", TArrow (TInt, TInt
+), Abs ("x", TInt, Var "x")) in
+  if n == 0 then church_zero
+  else
+    Abs
+      ( "f",
+        TArrow (TInt, TInt),
+        Abs
+          ( "x",
+            TInt,
+            let rec apply_f n x =
+              if n = 0 then x else App (Var "f",
+ apply_f (n - 1) x)
+            in
+            apply_f n (Var "x") ) )
+
+
+
+
+
