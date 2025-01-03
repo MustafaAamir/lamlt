@@ -6,15 +6,14 @@ a lambda calculus evaluator in OCaml
 navigate to lib/ and run utop
 
 ```shell
-> utop
-> #use "lambda.ml"
+> opam install dune utop ocamlformat
+> dune utop
 ```
 # TODO:
 
-1. Add macros for if, is_zero, and other primitive operations
+1. ~Add macros for if, is_zero, and other primitive operations~
 2. Add OUnit2 tests
-3. add interface
-4. 
+3. ~add interface~
 
 
 
