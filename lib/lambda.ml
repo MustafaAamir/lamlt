@@ -81,7 +81,8 @@ let beta_reduce term =
   try reduce term with
   | Stack_overflow ->
     Printf.printf
-      "Stack overflow occurred! possible infinite recursion or the expression is too deeply nested to evaluate.";
+      "Stack overflow occurred! possible infinite recursion or the expression is too \
+       deeply nested to evaluate.";
     term
 ;;
 
