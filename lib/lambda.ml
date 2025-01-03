@@ -1,6 +1,10 @@
 type t =
   | TVar of string (* TVar "something" *)
   | TArrow of t * t (*int -> int*)
+
+
+
+
   | TInt (* int *)
 
 type term =
@@ -66,8 +70,7 @@ let rec alpha x s term =
 
 let beta_reduce term =
   let rec reduce term = begin
-    let () = print_endline("Beta: " ^ string_of_
-term(term)) in (* DEBUG *)
+    let () = print_endline("Beta: " ^ string_of_term(term)) in (* DEBUG *)
     match term with
     | App (Abs (x, _, t1), t2) -> alpha x t2 t1
 |> reduce
@@ -119,9 +122,12 @@ n application")
  (* Helpers . will use seperate module in futhre*)
 
 let interpret_church num =
+  match num with
+  | Abs ("f", _, Abs ("x", _, body)) ->
       let rec count_apps t count =
         match t with
         | Var "x" -> count
+        | App (Var "f", t') -> count_apps t' (count + 1)
         | _ -> failwith "invalid church numeral"
       in
       count_apps body 0
