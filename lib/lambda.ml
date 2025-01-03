@@ -47,3 +47,43 @@ bers. x -> y -> z *)
   | App (t1, t2) -> free_var t1 @ free_var t2
       (* recursively frees a function application. quadratic merge tho, soo
 oooo *)
+
+
+let rec alpha x s term =
+ let () = print_endline("Alpha: " ^ string_of_term(term)) in (* DEBUG *)
+  match term with
+  | Var term' when x = term' -> s (* case of direct match return body *)
+  | Var term' -> Var term'
+  | Int n -> Int n
+  | App (t1, t2) -> App (alpha x s t1, alpha x s t2)
+  | Abs (y, ty, t) when x = y -> Abs (y, ty, t)
+  | Abs (y, ty, t) when not (List.mem y (free_var s)) -> Abs (y, ty, alpha x s t)
+  | Abs (y, ty, t) ->
+      let gen = gen_var y in
+      let t' = alpha y (Var gen) t in
+      Abs (gen, ty, alpha x s t')
+
+
+let beta_reduce term =
+  let rec reduce term = begin
+    let () = print_endline("Beta: " ^ string_of_
+term(term)) in (* DEBUG *)
+    match term with
+    | App (Abs (x, _, t1), t2) -> alpha x t2 t1
+|> reduce
+    | App (t1, t2) ->
+        let t1' = reduce t1 in
+        let t2' = reduce t2 in
+        if t1 = t1' && t2 = t2' then App (t1, t2
+) else App (t1', t2') |> reduce
+    | Abs (x, ty, t) -> Abs (x, ty, reduce t)
+    | _ -> term
+  end
+  in
+  try reduce term
+  with Stack_overflow ->
+    Printf.printf
+      "Stack overflow occurred! possible infinit
+e recursion or the expression \
+       is too deeply nested to evaluate.";
+    term
