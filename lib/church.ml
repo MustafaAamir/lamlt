@@ -4,6 +4,19 @@ module Church = struct
   let true' = Abs ("x", TVar "a", Abs ("y", TVar "b", Var "x"))
   let false' = Abs ("x", TVar "a", Abs ("y", TVar "b", Var "y"))
 
+  let not' = Abs("x", TVar "a", App(App(Var "x", false'), true'))
+  let and' = Abs("x", TVar "a", Abs("y", TVar "b", App(App(Var "x", Var "y"), false')))
+  let or'  = Abs("x", TVar "a", Abs("y", TVar "b", App(App(Var "x", true'), Var "y")))
+  
+  let xor' = Abs ("x", TVar "a", Abs ("y", TVar "b", App (App (Var "x", App (Var "y", false')), true')))
+  let xnor' = Abs ("x", TVar "a", Abs ("y", TVar "b", App (App (Var "x", App (Var "y", true')), false')))
+  let lte' = Abs ("m", TArrow (TInt, TInt), Abs ("n", TArrow (TInt, TInt), Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, App (App (Var "m", Abs ("f", TArrow (TInt, TInt), Var "x")), Var "x")))))
+  let gte' = Abs ("m", TArrow (TInt, TInt), Abs ("n", TArrow (TInt, TInt), Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, App (App (Var "n", Abs ("f", TArrow (TInt, TInt), Var "x")), Var "x")))))
+  let lt' = Abs ("m", TArrow (TInt, TInt), Abs ("n", TArrow (TInt, TInt), Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, App (App (Var "m", Abs ("f", TArrow (TInt, TInt), Var "x")), Var "x")))))
+  let gt' = Abs ("m", TArrow (TInt, TInt), Abs ("n", TArrow (TInt, TInt), Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, App (App (Var "n", Abs ("f", TArrow (TInt, TInt), Var "x")), Var "x")))))
+  let eq' = Abs ("m", TArrow (TInt, TInt), Abs ("n", TArrow (TInt, TInt), Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, App (App (Var "m", Abs ("f", TArrow (TInt, TInt), Var "x")), Var "x")))))
+  
+
   (* Zero *)
   let zero = Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, Var "x"))
 

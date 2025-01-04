@@ -10,4 +10,14 @@ module Church : sig
   val pred' : Lambda.term
   val if' : Lambda.term
   val is_zero : Lambda.term
+  val and' : Lambda.term
+  val or' : Lambda.term
+  val not' : Lambda.term
+  val xor' : Lambda.term
+  val xnor' : Lambda.term
+  val lte' : Lambda.term
+  val gte' : Lambda.term
+  val lt' : Lambda.term
+  val gt' : Lambda.term
+  val eq' : Lambda.term
 end
