@@ -42,8 +42,8 @@ let command =
        | [], false ->
          print_endline "specify modules or all";
          exit 0
-       | [], true -> bench_all ()
-       | _, _ -> List.iter args ~f:map_bench)
+       | _, true -> bench_all ()
+       | _, false -> List.iter args ~f:map_bench)
 ;;
 
 let () = Command_unix.run command

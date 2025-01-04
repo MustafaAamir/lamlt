@@ -18,4 +18,4 @@ val beta_reduce : term -> term
 
 exception TypeError of string
 
-val type_check : (string * t) list -> term -> t
+val type_check : term -> t

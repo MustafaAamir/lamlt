@@ -13,8 +13,17 @@ let rec string_of_type = function
   | TVar s -> s
   | TInt -> "int"
   | TArrow (t1, t2) ->
-    (match t1 with
-     | _ -> string_of_type t1 ^ " -> " ^ string_of_type t2)
+    let t1' =
+      match t1 with
+      | TArrow _ -> "(" ^ string_of_type t1 ^ ")"
+      | _ -> string_of_type t1
+    in
+    let t2' =
+      match t2 with
+      | TArrow _ -> "(" ^ string_of_type t2 ^ ")"
+      | _ -> string_of_type t2
+    in
+    t1' ^ " -> " ^ t2'
 ;;
 
 (* does it handle nesting porpely? *)
@@ -89,22 +98,37 @@ let beta_reduce term =
 (* type checking . will modify*)
 exception TypeError of string
 
-let rec type_check env term =
-  match term with
-  | Int _ -> TInt
-  | Var x ->
-    (match List.assoc_opt x env with
-     | Some t -> t
-     | None -> raise (TypeError ("Unbound variable: " ^ x)))
-  | Abs (x, t1, body) ->
-    let body_type = type_check ((x, t1) :: env) body in
-    TArrow (t1, body_type)
-  | App (t1, t2) ->
-    (match type_check env t1 with
-     | TArrow (arg_type, ret_type) ->
-       let t2_type = type_check env t2 in
-       if t2_type = arg_type
-       then ret_type
-       else raise (TypeError "Type mismatch in application")
-     | _ -> raise (TypeError "Expected function type"))
+(*
+   λλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλ        
+                    Basic rules -- for my own understanding
+1. λx:t.y -> x is binded to type t. if t were TInt, then x would be TInt Assuming this is the entire term, this would raise an unbound variable error, since 'y' doesn't exist as an argument to an anon func  (isn't in scope)
+  - λx:t.x would be correct
+  - λy:t.y would also be correct (alpha conversoin)
+
+2. In an abstraction λx:t.(λy:t'.y) 't' is bound to x. The Abstraction would have a type TArrow(t, TArrow(t', t')) because it is a function that takes a variable of type 't', and returns another abstraction taking the type of t' as an argument
+and returns a value of the same type t'
+
+3. In an application of function (λx:t.x) y the abstraction has the type TArrow(t, t), therefore, the variable y would have type t.
+*)
+let type_check term =
+  let rec type_check' env term =
+    match term with
+    | Int _ -> TInt
+    | Var x ->
+      (match List.assoc_opt x env with
+       | Some t -> t
+       | None -> raise (TypeError ("Unbound variable: " ^ x)))
+    | Abs (x, t1, body) ->
+      let body_type = type_check' ((x, t1) :: env) body in
+      TArrow (t1, body_type)
+    | App (t1, t2) ->
+      (match type_check' env t1 with
+       | TArrow (arg_type, ret_type) ->
+         let t2_type = type_check' env t2 in
+         if t2_type = arg_type
+         then ret_type
+         else raise (TypeError "Type mismatch in application")
+       | _ -> raise (TypeError "Expected function type"))
+  in
+  type_check' [] term
 ;;
