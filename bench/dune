@@ -1,0 +1,6 @@
+(executable
+ (name bench)
+ (libraries lcaml core_bench core)
+ (modules bench)
+ (preprocess
+  (pps ppx_jane)))
