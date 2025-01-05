@@ -20,4 +20,8 @@ module Church : sig
   val lt' : Lambda.term
   val gt' : Lambda.term
   val eq' : Lambda.term
+  val y' : Lambda.term
+  val i' : Lambda.term
+  val k' : Lambda.term 
+  val s' : Lambda.term 
 end
