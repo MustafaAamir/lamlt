@@ -50,7 +50,20 @@ module TypeCheck = struct
         then Type.EApp (t1, t2)
         else Type.EApp (t1', t2') |> reduce
       | Type.EAbs (x, t) -> Type.EAbs (x, reduce t)
-      | Type.ELet (x, e, body) -> Type.ELet (x, reduce e, reduce body)
+      (* let x = \\f.f in x 10
+         should reduce to
+         (\\f.f) 10
+         id 10 ~> Int 10
+
+         bind e1 to x, reduce e1
+         alpha substitute occurrences of Var "x" with e1
+         reduce the resulting expression
+         return
+      *)
+      | Type.ELet (x, e1, e2) ->
+        let e1' = reduce e1 in
+        let e2' = reduce (alpha x e1' e2) in
+        e2'
       | _ -> term
     in
     try reduce term with
