@@ -61,22 +61,22 @@ module Parser = struct
       let abs =
         backslash *> identifier <* arrow >>= fun x -> expr >>| fun e -> Type.EAbs (x, e)
       in
-    let debug p name =
-      p >>= fun x ->
-      Printf.printf "%s: parsed\n%!" name;
-      return x
-     in
+      let debug p name =
+        p
+        >>= fun x ->
+        Printf.printf "%s: parsed\n%!" name;
+        return x
+      in
       (* Type.ELet expression *)
       let let_expr =
-          debug (
-        let_tok *> spaces *> identifier
-        >>= fun x ->
-        spaces *> equals *> spaces *> expr
-        >>= fun e1 ->
-        spaces *> in_tok *> spaces *> expr
-        >>| fun e2 -> Type.ELet (x, e1, e2)) "let_epxr"
+        debug
+          (let_tok *> spaces *> identifier
+           >>= fun x ->
+           spaces *> equals *> spaces *> expr
+           >>= fun e1 ->
+           spaces *> in_tok *> spaces *> expr >>| fun e2 -> Type.ELet (x, e1, e2))
+          "let_epxr"
       in
-
       (* Parenthesized expression *)
       let paren = lparen *> expr <* rparen in
       (* Main expression parser *)

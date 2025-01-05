@@ -1,5 +1,6 @@
 module TypeCheck = struct
   open Types
+
   let gen_var =
     let counter = ref 0 in
     fun base ->
@@ -50,8 +51,8 @@ module TypeCheck = struct
         else Type.EApp (t1', t2') |> reduce
       | Type.EAbs (x, t) -> Type.EAbs (x, reduce t)
       | Type.ELet (x, e1, e2) ->
-              let e1' = reduce e1 in
-              alpha x e1' e2 |> reduce
+        let e1' = reduce e1 in
+        alpha x e1' e2 |> reduce
       | _ -> term
     in
     try reduce term with
@@ -64,5 +65,4 @@ module TypeCheck = struct
 
   type tycon = string * Type.t
   type scheme = tycon list
-
 end

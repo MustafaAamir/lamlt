@@ -194,4 +194,3 @@ module Church = struct
           , Abs ("x", TVar "a", App (Var "f", App (Var "x", Var "x"))) ) )
   ;;
 end
-
