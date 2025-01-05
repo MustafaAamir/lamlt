@@ -1,5 +1,6 @@
 (library
- (modules lambda church)
+ (modules lambda church Parser)
  (public_name lcaml)
  (name lcaml)
+ (libraries angstrom)
  (wrapped true))

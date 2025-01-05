@@ -1,7 +1,9 @@
 type t =
   | TVar of string (* TVar "something" *)
   | TArrow of t * t (*int -> int*)
-  | TInt (* int *)
+  | TInt
+(* int *)
+(*| Let of string * expression * expression*)
 
 type term =
   | Var of string (* Var "x" *)
@@ -57,7 +59,44 @@ bers. x -> y -> z *)
 
 (* recursively frees a function application. quadratic merge tho, soo
 oooo *)
+(*
+TODO: Add to README.md
+lc is statically scoped.
+let stub =
+   let discard = "hello" in
+   discard is available in this scope
+   discard |> print_endline
+;;
 
+discard isn't available in this scope.
+
+alpha ~x:variable_to_be_replaced ~s:term_that_replaces_x term
+in λy:itn.(x y) our goal is to replace y with Var "x"
+   λλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλ
+   abstractions create bound variables
+   bound variables can't be substituted
+   λx.z x introduces the bound variable x.
+   Look for free vars
+   z is free
+   replace
+   check for name resolution conflicts
+   if alpha "z" "x" λx.z x
+   X already exists in this abstraction
+   replace occurences of x with x1
+   replace z with x
+   new expressoin λx1.x x1
+   (ignore changing suffixes, free_var list doesn't get flushed)
+
+   if alpha "y" "x" λx.λx.y
+   check if y is bound
+   if free
+   replace all occurrences of x with gen_var(x).
+   the new and old expressions will be alpha equiv
+   replace y with x
+   you'll get smth like λx1.λx1.x
+   because λx.λx.x wouldn't be the same
+
+ *)
 let rec alpha x s term =
   let () = print_endline ("Alpha: " ^ string_of_term term) in
   (* DEBUG *)
@@ -99,7 +138,7 @@ let beta_reduce term =
 exception TypeError of string
 
 (*
-   λλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλ        
+   λλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλ
                     Basic rules -- for my own understanding
 1. λx:t.y -> x is binded to type t. if t were TInt, then x would be TInt Assuming this is the entire term, this would raise an unbound variable error, since 'y' doesn't exist as an argument to an anon func  (isn't in scope)
   - λx:t.x would be correct

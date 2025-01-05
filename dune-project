@@ -19,7 +19,7 @@
  (name lcaml)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml ocamlformat)
+ (depends ocaml ocamlformat base angstrom)
  (tags
   ("Lambda Calculus Automated Theorem Proving Logic Church" "to describe" your project)))
 
