@@ -79,9 +79,9 @@ module Lexer = struct
 end
 
 module Parser = struct
+  (* Types for our AST *)
   open Angstrom
 
-  (* Types for our AST *)
   type expression =
     | Var of string
     | App of expression * expression

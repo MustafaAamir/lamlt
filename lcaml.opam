@@ -22,6 +22,7 @@ depends: [
   "ocaml"
   "ocamlformat"
   "base"
+  "angstrom"
   "odoc" {with-doc}
 ]
 build: [
