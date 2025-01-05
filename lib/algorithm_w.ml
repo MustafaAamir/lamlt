@@ -1,6 +1,5 @@
 module TypeCheck = struct
   open Types
-
   let gen_var =
     let counter = ref 0 in
     fun base ->
@@ -38,48 +37,30 @@ module TypeCheck = struct
     | Type.ELet (x', e, body) -> Type.ELet (x', alpha x s e, alpha x s body)
   ;;
 
-  let rec substitute x e body =
-    match body with
-    | Type.EVar y when y = x -> e  (*substitute x with e*)
-    | Type.EVar _ -> body  (*no substitution needed *)
-    | Type.EAbs (y, _) when y = x -> body
-    | Type.EAbs (y, t) -> 
-        Type.EAbs (y, substitute x e t)  (*substitute in body *)
-    | Type.EApp (t1, t2) -> 
-        Type.EApp (substitute x e t1, substitute x e t2)  (*substitute in both*)
-    | Type.ELet (y, e', body') when y = x -> 
-        Type.ELet (y, e', body') 
-    | Type.ELet (y, e', body') -> 
-        Type.ELet (y, substitute x e e', substitute x e body')  
-    | _ -> body
-  
-    let beta_reduce term =
-      let rec reduce term =
-        match term with
-        | Type.EApp (Type.EAbs (x, t1), t2) -> 
-           
-            substitute x t2 t1 |> reduce
-        | Type.EApp (t1, t2) -> 
-            let t1' = reduce t1 in
-            let t2' = reduce t2 in
-            if t1 = t1' && t2 = t2' then Type.EApp (t1, t2)
-            else Type.EApp (t1', t2') |> reduce
-        | Type.EAbs (x, t) -> 
-            Type.EAbs (x, reduce t) 
-        | Type.ELet (x, e, body) -> 
-            let e' = reduce e in   
-            let body' = reduce body in
-            substitute x e' body' |> reduce  
-        | _ -> term
-      in
-      try reduce term with
-      | Stack_overflow -> 
-          Printf.printf "Stack overflow occurred! Possible infinite recursion or too deeply nested expression.\n";
-          term
-    
-    
+  let beta_reduce term =
+    let rec reduce term =
+      (* DEBUG *)
+      match term with
+      | Type.EApp (Type.EAbs (x, t1), t2) -> alpha x t2 t1 |> reduce
+      | Type.EApp (t1, t2) ->
+        let t1' = reduce t1 in
+        let t2' = reduce t2 in
+        if t1 = t1' && t2 = t2'
+        then Type.EApp (t1, t2)
+        else Type.EApp (t1', t2') |> reduce
+      | Type.EAbs (x, t) -> Type.EAbs (x, reduce t)
+      | Type.ELet (x, e, body) -> Type.ELet (x, reduce e, reduce body)
+      | _ -> term
+    in
+    try reduce term with
+    | Stack_overflow ->
+      Printf.printf
+        "Stack overflow occurred! possible infinite recursion or the expression is too \
+         deeply nested to evaluate.";
+      term
   ;;
 
   type tycon = string * Type.t
   type scheme = tycon list
+
 end

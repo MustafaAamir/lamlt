@@ -26,14 +26,15 @@ module Parser = struct
     take_while is_rest_char >>= fun rest -> return (String.make 1 first ^ rest) <* spaces
   ;;
 
-  let number = 
-     let is_num = function 
-             | '0'..'9' -> true 
-             | _ -> false
-     in 
-     spaces *> satisfy is_num >>= fun mk -> take_while is_num >>= fun rest -> return (String.make 1 mk ^ rest) <* spaces
+  let number =
+    let is_num = function
+      | '0' .. '9' -> true
+      | _ -> false
+    in
+    spaces *> satisfy is_num
+    >>= fun mk ->
+    take_while is_num >>= fun rest -> return (String.make 1 mk ^ rest) <* spaces
   ;;
-
 
   (* Specific token parsers *)
   let backslash = token (char '\\')
@@ -60,23 +61,35 @@ module Parser = struct
       let abs =
         backslash *> identifier <* arrow >>= fun x -> expr >>| fun e -> Type.EAbs (x, e)
       in
+    let debug p name =
+      p >>= fun x ->
+      Printf.printf "%s: parsed\n%!" name;
+      return x
+     in
       (* Type.ELet expression *)
       let let_expr =
-        let_tok *> identifier
-        <* equals
-        >>= fun x -> expr <* in_tok >>= fun e1 -> expr >>| fun e2 -> Type.ELet (x, e1, e2)
+          debug (
+        let_tok *> spaces *> identifier
+        >>= fun x ->
+        spaces *> equals *> spaces *> expr
+        >>= fun e1 ->
+        spaces *> in_tok *> spaces *> expr
+        >>| fun e2 -> Type.ELet (x, e1, e2)) "let_epxr"
       in
+
       (* Parenthesized expression *)
       let paren = lparen *> expr <* rparen in
       (* Main expression parser *)
       let atomic = choice [ var; abs; let_expr; paren; int' ] in
       (* Parse a sequence of expressions and collect them into function applications *)
-      many1 atomic >>| collect_applications)
+      many1 (atomic <* spaces) >>| collect_applications)
   ;;
 
   (* Main parse function *)
   let parse input =
-    match parse_string ~consume:All (spaces *> expr) input with
+    match
+      parse_string ~consume:All (spaces *> expr <* spaces <* Angstrom.end_of_input) input
+    with
     | Ok result -> result
     | Error msg -> failwith ("Parse error: " ^ msg)
   ;;
