@@ -26,6 +26,15 @@ module Parser = struct
     take_while is_rest_char >>= fun rest -> return (String.make 1 first ^ rest) <* spaces
   ;;
 
+  let number = 
+     let is_num = function 
+             | '0'..'9' -> true 
+             | _ -> false
+     in 
+     spaces *> satisfy is_num >>= fun mk -> take_while is_num >>= fun rest -> return (String.make 1 mk ^ rest) <* spaces
+  ;;
+
+
   (* Specific token parsers *)
   let backslash = token (char '\\')
   let arrow = token (string ".")
@@ -46,6 +55,7 @@ module Parser = struct
       in
       (* Variable expression *)
       let var = identifier >>| fun x -> Type.EVar x in
+      let int' = number >>| fun x -> Type.EInt (int_of_string x) in
       (* Abstraction expression *)
       let abs =
         backslash *> identifier <* arrow >>= fun x -> expr >>| fun e -> Type.EAbs (x, e)
@@ -59,7 +69,7 @@ module Parser = struct
       (* Parenthesized expression *)
       let paren = lparen *> expr <* rparen in
       (* Main expression parser *)
-      let atomic = choice [ var; abs; let_expr; paren ] in
+      let atomic = choice [ var; abs; let_expr; paren; int' ] in
       (* Parse a sequence of expressions and collect them into function applications *)
       many1 atomic >>| collect_applications)
   ;;
