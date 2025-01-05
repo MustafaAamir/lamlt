@@ -21,6 +21,8 @@ depends: [
   "dune" {>= "3.17"}
   "ocaml"
   "ocamlformat"
+  "base"
+  "angstrom"
   "odoc" {with-doc}
 ]
 build: [
