@@ -25,11 +25,7 @@ module Lexer : sig
 end
 
 module Parser : sig
-  type expression =
-    | Var of string
-    | App of expression * expression
-    | Abs of string * expression
-    | Let of string * expression * expression
+  open Types
 
   val is_space : char -> bool
   val spaces : string Angstrom.t
@@ -42,6 +38,6 @@ module Parser : sig
   val in_tok : string Angstrom.t
   val lparen : char Angstrom.t
   val rparen : char Angstrom.t
-  val expr : expression Angstrom.t
-  val parse : string -> expression
+  val expr : Type.expression Angstrom.t
+  val parse : string -> Type.expression
 end

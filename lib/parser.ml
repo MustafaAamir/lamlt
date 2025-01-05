@@ -1,3 +1,77 @@
+module Parser = struct
+  (* Types for our AST *)
+  open Angstrom
+  open Types
+
+  (* Basic parsers for whitespace and tokens *)
+  let is_space = function
+    | ' ' | '\t' | '\n' | '\r' -> true
+    | _ -> false
+  ;;
+
+  let spaces = take_while is_space
+  let token p = p <* spaces
+
+  let identifier =
+    let is_first_char = function
+      | 'a' .. 'z' | 'A' .. 'Z' | '_' -> true
+      | _ -> false
+    in
+    let is_rest_char = function
+      | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> true
+      | _ -> false
+    in
+    spaces *> satisfy is_first_char
+    >>= fun first ->
+    take_while is_rest_char >>= fun rest -> return (String.make 1 first ^ rest) <* spaces
+  ;;
+
+  (* Specific token parsers *)
+  let backslash = token (char '\\')
+  let arrow = token (string ".")
+  let equals = token (char '=')
+  let let_tok = token (string "let")
+  let in_tok = token (string "in")
+  let lparen = token (char '(')
+  let rparen = token (char ')')
+
+  (* Forward reference for the expression parser *)
+  let expr : Type.expression t =
+    fix (fun expr ->
+      (* Helper to collect function applications *)
+      let collect_applications = function
+        | [] -> assert false (* Should never happen due to our parser structure *)
+        | [ e ] -> e
+        | e :: es -> List.fold_left (fun acc e -> Type.EApp (acc, e)) e es
+      in
+      (* Variable expression *)
+      let var = identifier >>| fun x -> Type.EVar x in
+      (* Abstraction expression *)
+      let abs =
+        backslash *> identifier <* arrow >>= fun x -> expr >>| fun e -> Type.EAbs (x, e)
+      in
+      (* Type.ELet expression *)
+      let let_expr =
+        let_tok *> identifier
+        <* equals
+        >>= fun x -> expr <* in_tok >>= fun e1 -> expr >>| fun e2 -> Type.ELet (x, e1, e2)
+      in
+      (* Parenthesized expression *)
+      let paren = lparen *> expr <* rparen in
+      (* Main expression parser *)
+      let atomic = choice [ var; abs; let_expr; paren ] in
+      (* Parse a sequence of expressions and collect them into function applications *)
+      many1 atomic >>| collect_applications)
+  ;;
+
+  (* Main parse function *)
+  let parse input =
+    match parse_string ~consume:All (spaces *> expr) input with
+    | Ok result -> result
+    | Error msg -> failwith ("Parse error: " ^ msg)
+  ;;
+end
+
 module Lexer = struct
   type token =
     | Lambda
@@ -75,84 +149,5 @@ module Lexer = struct
       in
       aux 0
     | _ -> [ EOF ]
-  ;;
-end
-
-module Parser = struct
-  (* Types for our AST *)
-  open Angstrom
-
-  type expression =
-    | Var of string
-    | App of expression * expression
-    | Abs of string * expression
-    | Let of string * expression * expression
-
-  (* Basic parsers for whitespace and tokens *)
-  let is_space = function
-    | ' ' | '\t' | '\n' | '\r' -> true
-    | _ -> false
-  ;;
-
-  let spaces = take_while is_space
-  let token p = p <* spaces
-
-  let identifier =
-    let is_first_char = function
-      | 'a' .. 'z' | 'A' .. 'Z' | '_' -> true
-      | _ -> false
-    in
-    let is_rest_char = function
-      | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> true
-      | _ -> false
-    in
-    spaces *> satisfy is_first_char
-    >>= fun first ->
-    take_while is_rest_char >>= fun rest -> return (String.make 1 first ^ rest) <* spaces
-  ;;
-
-  (* Specific token parsers *)
-  let backslash = token (char '\\')
-  let arrow = token (string "->")
-  let equals = token (char '=')
-  let let_tok = token (string "let")
-  let in_tok = token (string "in")
-  let lparen = token (char '(')
-  let rparen = token (char ')')
-
-  (* Forward reference for the expression parser *)
-  let expr : expression t =
-    fix (fun expr ->
-      (* Helper to collect function applications *)
-      let collect_applications = function
-        | [] -> assert false (* Should never happen due to our parser structure *)
-        | [ e ] -> e
-        | e :: es -> List.fold_left (fun acc e -> App (acc, e)) e es
-      in
-      (* Variable expression *)
-      let var = identifier >>| fun x -> Var x in
-      (* Abstraction expression *)
-      let abs =
-        backslash *> identifier <* arrow >>= fun x -> expr >>| fun e -> Abs (x, e)
-      in
-      (* Let expression *)
-      let let_expr =
-        let_tok *> identifier
-        <* equals
-        >>= fun x -> expr <* in_tok >>= fun e1 -> expr >>| fun e2 -> Let (x, e1, e2)
-      in
-      (* Parenthesized expression *)
-      let paren = lparen *> expr <* rparen in
-      (* Main expression parser *)
-      let atomic = choice [ var; abs; let_expr; paren ] in
-      (* Parse a sequence of expressions and collect them into function applications *)
-      many1 atomic >>| collect_applications)
-  ;;
-
-  (* Main parse function *)
-  let parse input =
-    match parse_string ~consume:All (spaces *> expr) input with
-    | Ok result -> result
-    | Error msg -> failwith ("Parse error: " ^ msg)
   ;;
 end

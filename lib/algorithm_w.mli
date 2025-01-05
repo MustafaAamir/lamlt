@@ -1,21 +1,11 @@
-module Type : sig
-  type exp =
-    | EVar of string
-    | EInt of int
-    | EApp of exp * exp
-    | EAbs of string * exp
-    | ELet of string * exp * exp
-
-  type t =
-    | TVar of string
-    | TInt
-    | TArrow of t * t
+module TypeCheck : sig
+  open Types
 
   val gen_var : string -> string
-  val free_var : exp -> string list
-  val alpha : string -> exp -> exp -> exp
-  val beta_reduce : exp -> exp
+  val free_var : Type.expression -> string list
+  val alpha : string -> Type.expression -> Type.expression -> Type.expression
+  val beta_reduce : Type.expression -> Type.expression
 
-  type tycon = string * t
+  type tycon = string * Type.t
   type scheme = tycon list
 end
