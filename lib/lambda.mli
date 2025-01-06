@@ -14,8 +14,7 @@ val string_of_term : term -> string
 val gen_var : string -> string
 val free_var : term -> string list
 val alpha : string -> term -> term -> term
-val beta_reduce : term -> term
+val beta_reduce : ?max_steps:int -> term -> term
+val type_check : term -> t
 
 exception TypeError of string
-
-val type_check : term -> t

@@ -97,44 +97,52 @@ in λy:itn.(x y) our goal is to replace y with Var "x"
    because λx.λx.x wouldn't be the same
 
  *)
-let rec alpha x s term =
-  let () = print_endline ("Alpha: " ^ string_of_term term) in
-  (* DEBUG *)
+ let rec alpha x s term =
+  let () = Printf.printf "Alpha (%s -> %s) in %s\n" x (string_of_term s) (string_of_term term) in
   match term with
-  | Var term' when x = term' -> s (* case of direct match return body *)
-  | Var term' -> Var term'
-  | Int n -> Int n
-  | App (t1, t2) -> App (alpha x s t1, alpha x s t2)
-  | Abs (y, ty, t) when x = y -> Abs (y, ty, t)
-  | Abs (y, ty, t) when not (List.mem y (free_var s)) -> Abs (y, ty, alpha x s t)
+  | Var term' when x = term' -> s 
+  | Var term' -> Var term' 
+  | Int n -> Int n 
+  | App (t1, t2) -> App (alpha x s t1, alpha x s t2) 
+  | Abs (y, ty, t) when x = y -> Abs (y, ty, t) 
+  | Abs (y, ty, t) when not (List.mem y (free_var s)) ->
+    Abs (y, ty, alpha x s t) 
   | Abs (y, ty, t) ->
     let gen = gen_var y in
     let t' = alpha y (Var gen) t in
     Abs (gen, ty, alpha x s t')
-;;
 
-let beta_reduce term =
-  let rec reduce term =
-    let () = print_endline ("Beta: " ^ string_of_term term) in
-    (* DEBUG *)
-    match term with
-    | App (Abs (x, _, t1), t2) -> alpha x t2 t1 |> reduce
-    | App (t1, t2) ->
-      let t1' = reduce t1 in
-      let t2' = reduce t2 in
-      if t1 = t1' && t2 = t2' then App (t1, t2) else App (t1', t2') |> reduce
-    | Abs (x, ty, t) -> Abs (x, ty, reduce t)
-    | _ -> term
-  in
-  try reduce term with
-  | Stack_overflow ->
-    Printf.printf
-      "Stack overflow occurred! possible infinite recursion or the expression is too \
-       deeply nested to evaluate.";
-    term
-;;
 
-(* type checking . will modify*)
+  let beta_reduce ?(max_steps=1000) term =
+    let rec reduce term steps prev_terms =
+      if steps > max_steps then (
+        Printf.printf "Reduction limit (%d steps) reached!\n" max_steps;
+        term
+      ) else if List.mem term prev_terms then (
+        Printf.printf "Cyclic reduction detected\n";
+        term
+      ) else (
+        match term with
+        | App (Abs (x, _ty, t1), t2) ->
+            let reduced = alpha x t2 t1 in
+            reduce reduced (steps + 1) (term :: prev_terms)
+        | App (t1, t2) ->
+            let t1' = reduce t1 steps prev_terms in
+            let t2' = reduce t2 steps prev_terms in
+            if t1 == t1' && t2 == t2' then term
+            else reduce (App (t1', t2')) (steps + 1) (term :: prev_terms)
+        | Abs (x, ty, t) ->
+            let t' = reduce t steps prev_terms in
+            if t == t' then term
+            else Abs (x, ty, t')
+        | _ -> term
+      )
+    in
+    try reduce term 0 []
+    with Stack_overflow ->
+      Printf.printf "Stack overflow occurred!\n";
+      term
+
 exception TypeError of string
 
 (*
