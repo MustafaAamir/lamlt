@@ -1,41 +1,36 @@
 module Church = struct
-  open Lambda
+  open Types.Type
 
-  let true' = Abs ("x", TVar "a", Abs ("y", TVar "b", Var "x"))
-  let false' = Abs ("x", TVar "a", Abs ("y", TVar "b", Var "y"))
-  let not' = Abs ("x", TVar "a", App (App (Var "x", false'), true'))
-  let and' = Abs ("x", TVar "a", Abs ("y", TVar "b", App (App (Var "x", Var "y"), false')))
-  let or' = Abs ("x", TVar "a", Abs ("y", TVar "b", App (App (Var "x", true'), Var "y")))
+  let true' = EAbs ("x", EAbs ("y", EVar "x"))
+  let false' = EAbs ("x", EAbs ("y", EVar "y"))
+  let not' = EAbs ("x", EApp (EApp (EVar "x", false'), true'))
+  let and' = EAbs ("x", EAbs ("y", EApp (EApp (EVar "x", EVar "y"), false')))
+  let or' = EAbs ("x", EAbs ("y", EApp (EApp (EVar "x", true'), EVar "y")))
 
   let xor' =
-    Abs
+    EAbs
       ( "x"
-      , TVar "a"
-      , Abs
+      , EAbs
           ( "y"
-          , TVar "b"
-          , App
-              ( App (Var "x", App (App (Var "y", false'), true'))
-              , App (App (Var "y", true'), false') ) ) )
+          , EApp
+              ( EApp (EVar "x", EApp (EApp (EVar "y", false'), true'))
+              , EApp (EApp (EVar "y", true'), false') ) ) )
   ;;
 
-  let xnor' =
-    Abs
-      ("x", TVar "a", Abs ("y", TVar "b", App (not', App (App (xor', Var "x"), Var "y"))))
-  ;;
+  let xnor' = EAbs ("x", EAbs ("y", EApp (not', EApp (EApp (xor', EVar "x"), EVar "y"))))
 
   (* Zero *)
-  let zero = Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, Var "x"))
+  let zero = EAbs ("f", EAbs ("x", EVar "x"))
 
   let interpret = function
-    | Abs ("f", _, Abs ("x", _, body)) ->
+    | EAbs ("f", EAbs ("x", _body)) ->
       let rec count_apps t count =
         match t with
-        | Var "x" -> count
-        | App (Var "f", t') -> count_apps t' (count + 1)
+        | EVar "x" -> count
+        | EApp (EVar "f", t') -> count_apps t' (count + 1)
         | _ -> failwith "invalid church numeral"
       in
-      count_apps body 0
+      count_apps _body 0
     | _ -> failwith "Not a church numeral"
   ;;
 
@@ -43,154 +38,112 @@ module Church = struct
     if n == 0
     then zero
     else
-      Abs
+      EAbs
         ( "f"
-        , TArrow (TInt, TInt)
-        , Abs
+        , EAbs
             ( "x"
-            , TInt
             , let rec apply_f n x =
-                if n = 0 then x else App (Var "f", apply_f (n - 1) x)
+                if n = 0 then x else EApp (EVar "f", apply_f (n - 1) x)
               in
-              apply_f n (Var "x") ) )
+              apply_f n (EVar "x") ) )
   ;;
 
   (* Successor function *)
   let succ' =
-    Abs
+    EAbs
       ( "n"
-      , TArrow (TInt, TInt)
-      , Abs
-          ( "f"
-          , TArrow (TInt, TInt)
-          , Abs ("x", TInt, App (Var "f", App (App (Var "n", Var "f"), Var "x"))) ) )
+      , EAbs ("f", EAbs ("x", EApp (EVar "f", EApp (EApp (EVar "n", EVar "f"), EVar "x"))))
+      )
   ;;
 
   (* Add two Church numerals *)
   let add' =
-    Abs
+    EAbs
       ( "m"
-      , TArrow (TInt, TInt)
-      , Abs
+      , EAbs
           ( "n"
-          , TArrow (TInt, TInt)
-          , Abs
+          , EAbs
               ( "f"
-              , TArrow (TInt, TInt)
-              , Abs
+              , EAbs
                   ( "x"
-                  , TInt
-                  , App (App (Var "m", Var "f"), App (App (Var "n", Var "f"), Var "x")) )
-              ) ) )
+                  , EApp
+                      ( EApp (EVar "m", EVar "f")
+                      , EApp (EApp (EVar "n", EVar "f"), EVar "x") ) ) ) ) )
   ;;
 
   (* Multiply two Church numerals *)
-  let mul' =
-    Abs
-      ( "m"
-      , TArrow (TInt, TInt)
-      , Abs
-          ( "n"
-          , TArrow (TInt, TInt)
-          , Abs ("f", TArrow (TInt, TInt), App (Var "m", App (Var "n", Var "f"))) ) )
-  ;;
+  let mul' = EAbs ("m", EAbs ("n", EAbs ("f", EApp (EVar "m", EApp (EVar "n", EVar "f")))))
 
   (* Subtract one Church numeral from another (via predecessor) *)
   let pred' =
-    Abs
+    EAbs
       ( "n"
-      , TArrow (TInt, TInt)
-      , Abs
+      , EAbs
           ( "f"
-          , TArrow (TInt, TInt)
-          , Abs
+          , EAbs
               ( "x"
-              , TInt
-              , App
-                  ( App
-                      ( App
-                          ( Var "n"
-                          , Abs
-                              ( "g"
-                              , TArrow (TInt, TInt)
-                              , Abs
-                                  ( "h"
-                                  , TArrow (TInt, TInt)
-                                  , App (Var "h", App (Var "g", Var "f")) ) ) )
-                      , Abs ("u", TInt, Var "x") )
-                  , Abs ("u", TInt, Var "u") ) ) ) )
+              , EApp
+                  ( EApp
+                      ( EApp
+                          ( EVar "n"
+                          , EAbs
+                              ("g", EAbs ("h", EApp (EVar "h", EApp (EVar "g", EVar "f"))))
+                          )
+                      , EAbs ("u", EVar "x") )
+                  , EAbs ("u", EVar "u") ) ) ) )
   ;;
 
   (* If-then-else *)
-  let if' =
-    Abs
-      ( "p"
-      , TVar "a"
-      , Abs ("a", TVar "b", Abs ("b", TVar "c", App (App (Var "p", Var "a"), Var "b"))) )
-  ;;
+  let if' = EAbs ("p", EAbs ("a", EAbs ("b", EApp (EApp (EVar "p", EVar "a"), EVar "b"))))
 
   (* Is zero *)
-  let is_zero =
-    Abs ("n", TArrow (TInt, TInt), App (App (Var "n", Abs ("x", TVar "a", false')), true'))
-  ;;
+  let is_zero = EAbs ("n", EApp (EApp (EVar "n", EAbs ("x", false')), true'))
 
   (*Conditional operators*)
-  let sub' = Abs ("m", TInt, Abs ("n", TInt, App (App (Var "n", pred'), Var "m")))
-
-  let gte' =
-    Abs ("a", TInt, Abs ("b", TInt, App (is_zero, App (App (sub', Var "b"), Var "a"))))
-  ;;
-
-  let lte' =
-    Abs ("a", TInt, Abs ("b", TInt, App (is_zero, App (App (sub', Var "a"), Var "b"))))
-  ;;
+  let sub' = EAbs ("m", EAbs ("n", EApp (EApp (EVar "n", pred'), EVar "m")))
+  let gte' = EAbs ("a", EAbs ("b", EApp (is_zero, EApp (EApp (sub', EVar "b"), EVar "a"))))
+  let lte' = EAbs ("a", EAbs ("b", EApp (is_zero, EApp (EApp (sub', EVar "a"), EVar "b"))))
 
   let gt' =
-    Abs
+    EAbs
       ( "a"
-      , TInt
-      , Abs ("b", TInt, App (is_zero, App (App (sub', App (succ', Var "b")), Var "a"))) )
+      , EAbs ("b", EApp (is_zero, EApp (EApp (sub', EApp (succ', EVar "b")), EVar "a")))
+      )
   ;;
 
   let lt' =
-    Abs
+    EAbs
       ( "a"
-      , TInt
-      , Abs ("b", TInt, App (is_zero, App (App (sub', App (succ', Var "a")), Var "b"))) )
+      , EAbs ("b", EApp (is_zero, EApp (EApp (sub', EApp (succ', EVar "a")), EVar "b")))
+      )
   ;;
 
   let eq' =
-    Abs
+    EAbs
       ( "a"
-      , TInt
-      , Abs
+      , EAbs
           ( "b"
-          , TInt
-          , App
-              ( App (and', App (App (gte', Var "a"), Var "b"))
-              , App (App (lte', Var "a"), Var "b") ) ) )
+          , EApp
+              ( EApp (and', EApp (EApp (gte', EVar "a"), EVar "b"))
+              , EApp (EApp (lte', EVar "a"), EVar "b") ) ) )
   ;;
 
   (*Combinators and utility funcs, change file later*)
-  let i' = Abs ("x", TVar "a", Var "x")
-  let k' = Abs ("x", TVar "a", Abs ("y", TVar "b", Var "x"))
+  let i' = EAbs ("x", EVar "x")
+  let k' = EAbs ("x", EAbs ("y", EVar "x"))
 
   let s' =
-    Abs
+    EAbs
       ( "x"
-      , TVar "a"
-      , Abs
-          ( "y"
-          , TVar "b"
-          , Abs ("z", TVar "c", App (App (Var "x", Var "z"), App (Var "y", Var "z"))) ) )
+      , EAbs ("y", EAbs ("z", EApp (EApp (EVar "x", EVar "z"), EApp (EVar "y", EVar "z"))))
+      )
   ;;
 
   let y' =
-    Abs
+    EAbs
       ( "f"
-      , TVar "a"
-      , App
-          ( Abs ("x", TVar "a", App (Var "f", App (Var "x", Var "x")))
-          , Abs ("x", TVar "a", App (Var "f", App (Var "x", Var "x"))) ) )
+      , EApp
+          ( EAbs ("x", EApp (EVar "f", EApp (EVar "x", EVar "x")))
+          , EAbs ("x", EApp (EVar "f", EApp (EVar "x", EVar "x"))) ) )
   ;;
 end

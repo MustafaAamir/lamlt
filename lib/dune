@@ -1,6 +1,6 @@
 (library
- (modules types lambda church parser algorithm_w)
+ (modules types church type_checker)
  (public_name lcaml)
  (name lcaml)
- (libraries angstrom)
+ (libraries menhirLib)
  (wrapped true))

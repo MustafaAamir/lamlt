@@ -1,8 +1,6 @@
-#require "angstrom";;
 #use "lib/types.ml";;
 #use "lib/lambda.ml";;
 #use "lib/church.ml";;
+#use "lib/type_checker.ml";;
 #use "bin/main.ml";;
-#use "lib/parser.ml";;
-#use "lib/algorithm_w.ml";;
 

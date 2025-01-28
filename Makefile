@@ -1,6 +1,6 @@
 .PHONY: all benchmark tests clean
 all:
-	dune exec lcaml
+	dune exec exe
 benchmark:
 	dune build bench/bench.exe
 ifdef arg
