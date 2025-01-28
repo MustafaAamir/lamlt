@@ -1,12 +1,12 @@
 module Type : sig
   type expression =
-    | EVar of string
-    | EInt of int
-    | EBool of bool
-    | EApp of expression * expression
-    | EAbs of string * expression
-    | ELet of string * expression * expression
-    | EIf of expression * expression * expression
+    | Var of string
+    | Int of int
+    | Bool of bool
+    | App of expression * expression
+    | Abs of string * expression
+    | Let of string * expression * expression
+    | If of expression * expression * expression
 
   type t =
     | TVar of string

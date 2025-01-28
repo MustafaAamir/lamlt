@@ -4,58 +4,55 @@ open Lcaml.Type_checker
 (* \lambda x, y, z -> z *)
 (*
 let y = 
-    EAbs
+    Abs
       ( "f"
-      , EApp
-          ( EAbs ("x", EApp (EVar "f", EApp (EVar "x", EVar "x")))
-          , EAbs ("x", EApp (EVar "f", EApp (EVar "x", EVar "x"))) ) )
+      , App
+          ( Abs ("x", App (Var "f", App (Var "x", Var "x")))
+          , Abs ("x", App (Var "f", App (Var "x", Var "x"))) ) )
   ;;
 let if' =
-    EAbs
+    Abs
       ( "p"
-      , EAbs ("a", EAbs ("b", EApp (EApp (Var "p", Var "a"), Var "b"))) )
+      , Abs ("a", Abs ("b", App (App (Var "p", Var "a"), Var "b"))) )
   ;;
 
 let fact = 
-    EApp(
+    App(
         y, 
-        EAbs("f", EAbs("n", EApp(EApp(EApp(if', EApp(is_zero, Var "n")), Church.generate 1), EApp(EApp(mul', Var "n"), EApp(Var "f", EApp(pred', Var "n")))))))
+        Abs("f", Abs("n", App(App(App(if', App(is_zero, Var "n")), Church.generate 1), App(App(mul', Var "n"), App(Var "f", App(pred', Var "n")))))))
     
 let y =
-  EAbs
+  Abs
     ( "f"
-    , EApp
-        ( EAbs ("x", EApp (EVar "f", EApp (EVar "x", EVar "x")))
-        , EAbs ("x", EApp (EVar "f", EApp (EVar "x", EVar "x"))) ) )
+    , App
+        ( Abs ("x", App (Var "f", App (Var "x", Var "x")))
+        , Abs ("x", App (Var "f", App (Var "x", Var "x"))) ) )
 ;;
 
     *)
-let conditional =
-  EIf (EApp (EAbs ("x", EVar "x"), EBool false), EAbs ("x", EVar "x"), EBool true)
-;;
+let conditional = If (App (Abs ("x", Var "x"), Bool false), Abs ("x", Var "x"), Bool true)
 
 let factorial =
-  EAbs
+  Abs
     ( "f"
-    , EAbs
+    , Abs
         ( "n"
-        , EIf
-            ( EApp (EAbs ("=", EVar "n"), EInt 0)
-            , ELet
+        , If
+            ( App (Abs ("=", Var "n"), Int 0)
+            , Let
                 ( "decrement"
-                , EApp (EVar "f", EApp (EAbs ("-", EVar "n"), EInt 1))
-                , EApp (EAbs ("*", EVar "n"), EVar "decrement") )
-            , EInt 1 ) ) )
+                , App (Var "f", App (Abs ("-", Var "n"), Int 1))
+                , App (Abs ("*", Var "n"), Var "decrement") )
+            , Int 1 ) ) )
 ;;
 
-let _expr = EApp (factorial, EInt 5)
+let _expr = App (factorial, Int 5)
 
 let () =
-  let inf = TypeCheck.infer (EAbs ("x", EAbs ("y", EAbs ("z", EInt 1)))) in
+  let inf = TypeCheck.infer (Abs ("x", Abs ("y", Abs ("z", Int 1)))) in
   print_endline ("expression has type: " ^ TypeCheck.string_of_type inf);
   let inte =
-    TypeCheck.infer
-      (EApp (EAbs ("x", EApp (EAbs ("y", EVar "y"), EVar "x")), EInt (1 + 1)))
+    TypeCheck.infer (App (Abs ("x", App (Abs ("y", Var "y"), Var "x")), Int (1 + 1)))
   in
   print_endline ("expression has type: " ^ TypeCheck.string_of_type inte);
   let cond = TypeCheck.infer (TypeCheck.beta_reduce conditional) in
@@ -67,7 +64,7 @@ let () =
      ^ TypeCheck.string_of_term res
      ^ " has type: "
      ^ TypeCheck.string_of_type tres);*)
-  let exttt = EApp (EInt 2, EApp (EInt 1, EApp (EAbs ("+", EVar "n"), EVar "x"))) in
+  let exttt = App (Int 2, App (Int 1, App (Abs ("+", Var "n"), Var "x"))) in
   let res = TypeCheck.beta_reduce exttt in
   print_endline ("expression " ^ TypeCheck.string_of_term res ^ " has type: ")
 ;;
