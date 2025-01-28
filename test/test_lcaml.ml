@@ -1,5 +1,6 @@
 open OUnit2
-open Lcaml.Lambda
+open Lcaml.Type_checker.TypeCheck
+open Lcaml.Types.Type
 open Lcaml.Church
 
 (* reduction test *)
@@ -13,17 +14,17 @@ let basic_reduction_tests =
   >::: [ (* Identity function application *)
          rtest
            "identity function"
-           (App (Abs ("x", TInt, Var "x"), Church.generate 4))
+           (EApp (EAbs ("x", EVar "x"), Church.generate 4))
            (Church.generate 4)
        ; rtest
            "multi_arg_function"
-           (App (App (Abs ("x", TInt, Abs ("y", TInt, Var "x")), Int 1), Int 2))
-           (Int 1)
+           (EApp (EApp (EAbs ("x", EAbs ("y", EVar "x")), EInt 1), EInt 2))
+           (EInt 1)
        ; (* Nested applications *)
          rtest
            "nested_application"
-           (App (Abs ("x", TInt, App (Abs ("y", TInt, Var "y"), Var "x")), Int 42))
-           (Int 42)
+           (EApp (EAbs ("x", EApp (EAbs ("y", EVar "y"), EVar "x")), EInt 42))
+           (EInt 42)
        ]
 ;;
 
@@ -48,66 +49,51 @@ let church_tests =
          *)
          rtest
            "church_zero"
-           (let church_zero = Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, Var "x")) in
-            Int (Church.interpret church_zero))
-           (Int 0)
+           (let church_zero = EAbs ("f", EAbs ("x", EVar "x")) in
+            EInt (Church.interpret church_zero))
+           (EInt 0)
        ; (* it decomposes down to an identity function .\y.y*)
          rtest
            "chuch_gen_equiv_zero"
-           (let church_zero = Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, Var "x")) in
+           (let church_zero = EAbs ("f", EAbs ("x", EVar "x")) in
             church_zero)
            (Church.generate 0)
        ; rtest
            "church_one"
-           (let church_one =
-              Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, App (Var "f", Var "x")))
-            in
-            Int (Church.interpret church_one))
-           (Int 1)
+           (let church_one = EAbs ("f", EAbs ("x", EApp (EVar "f", EVar "x"))) in
+            EInt (Church.interpret church_one))
+           (EInt 1)
        ; rtest
            "church_gen_equiv_one"
-           (let church_one =
-              Abs ("f", TArrow (TInt, TInt), Abs ("x", TInt, App (Var "f", Var "x")))
-            in
+           (let church_one = EAbs ("f", EAbs ("x", EApp (EVar "f", EVar "x"))) in
             church_one)
            (Church.generate 1)
        ; rtest
            "church_two"
            (let church_two =
-              Abs
-                ( "f"
-                , TArrow (TInt, TInt)
-                , Abs ("x", TInt, App (Var "f", App (Var "f", Var "x"))) )
+              EAbs ("f", EAbs ("x", EApp (EVar "f", EApp (EVar "f", EVar "x"))))
             in
-            Int (Church.interpret church_two))
-           (Int 2)
+            EInt (Church.interpret church_two))
+           (EInt 2)
        ; rtest
            "gen_church_equiv_two"
            (let church_one =
-              Abs
-                ( "f"
-                , TArrow (TInt, TInt)
-                , Abs ("x", TInt, App (Var "f", App (Var "f", Var "x"))) )
+              EAbs ("f", EAbs ("x", EApp (EVar "f", EApp (EVar "f", EVar "x"))))
             in
             church_one)
            (Church.generate 2)
-       ; rtest "gen_church_100" (Int (Church.interpret (Church.generate 100))) (Int 100)
+       ; rtest "gen_church_100" (EInt (Church.interpret (Church.generate 100))) (EInt 100)
        ; (* Complex expression from previous example *)
          rtest
            "complex_xyz_reduction"
-           (let id = Abs ("x", TArrow (TVar "a", TVar "a"), Var "x") in
-            let self_app = Abs ("x", TVar "a", App (Var "x", Var "x")) in
+           (let id = EAbs ("x", EVar "x") in
+            let self_app = EAbs ("x", EApp (EVar "x", EVar "x")) in
             let xyz =
-              Abs
-                ( "x"
-                , TVar "a"
-                , Abs
-                    ( "y"
-                    , TVar "b"
-                    , Abs ("z", TVar "c", App (App (Var "x", Var "y"), Var "z")) ) )
+              EAbs
+                ("x", EAbs ("y", EAbs ("z", EApp (EApp (EVar "x", EVar "y"), EVar "z"))))
             in
-            App (App (App (xyz, self_app), id), Var "x"))
-           (Var "x")
+            EApp (EApp (EApp (xyz, self_app), id), EVar "x"))
+           (EVar "x")
        ]
 ;;
 
